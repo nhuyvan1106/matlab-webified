@@ -1,0 +1,142 @@
+
+import javax.json.*
+import java.util.stream.*
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.glassfish:javax.json:1.1.2'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'war'
+}
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs 'jars'
+    }
+}
+
+dependencies {
+    compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.27'
+    providedCompile group: 'org.glassfish', name: 'javax.servlet', version: '3.1.1'
+    compile group: 'org.glassfish', name: 'javax.json', version: '1.1.2'
+    compile 'ch.qos.logback:logback-classic:1.2.3'
+    compile name: 'compute_dot_product'
+    compile name: 'add_two_numbers'
+    compile name: 'javabuilder'
+    compile name: 'remoteproxy'
+}
+
+def parseConfig() {
+    def configJson = Json.createReader(new FileInputStream(file('config.json'))).readObject()
+    def config = [
+        matlabHome: configJson.getString('matlabHome'),
+        version: configJson.getString('version'),
+        name: configJson.getString('name'),
+        port: configJson.getInt('port')
+    ]
+    def errorMessages = ''
+    def matlabHome = file(config.matlabHome)
+    def matlabHomeWithVersion = file("${config.matlabHome}${File.separator}${config.version}")
+
+    if (config.matlabHome.endsWith(File.separator))
+        errorMessages = "-   In file config.json: matlabHome config key must not end with a '${File.separator}'${System.lineSeparator()}"
+
+    if(!matlabHome.exists())
+        errorMessages += "-  In file config.json: matlabHome config key does not resolve to an existing directory${System.lineSeparator()}"
+
+    else if (config.name.find("[^-_a-zA-z0-9]+") != null)
+        errorMessages += "-  In file config.json: name must contain letters, numbers, dashes, and underscores only"
+
+    else if(!matlabHomeWithVersion.exists())
+        errorMessages += "-  In file config.json: Please look inside ${config.matlabHome}${File.separator}MATLAB_Runtime for the correct version"
+    
+    if (!errorMessages.isEmpty())
+        throw new GradleException("""
+        ===========================================
+        ${System.lineSeparator()}
+        ${errorMessages}
+        ${System.lineSeparator()}
+        ===========================================
+        """)
+    
+    return config
+}
+
+def modifyStartScriptWithNewArchiveNameAndPortNumber(String archiveName, int port) {
+    def command;
+    BufferedWriter startScriptFileWriter = null;
+    def os = System.getProperty("os.name").toLowerCase()
+    if (os.contains("mac") || os.contains("nix")) {
+        command = "" + 
+                    "#!/bin/bash${System.lineSeparator()}" + 
+
+                    "./gradlew war" + System.lineSeparator() +
+
+                    'if [ $? -eq 0 ]' + System.lineSeparator() +
+                    'then' + System.lineSeparator() + 
+                    "    java -jar payara-micro-5.182.jar --port ${port}  --deploy build/libs/${archiveName} --addlibs ${pathToJavaBuilder}" + System.lineSeparator() +
+                    'fi'
+        startScriptFileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file('start.sh'))))
+    }
+    else if (os.contains("win")) {
+        command = "" + 
+                    "gradlew.bat war" + System.lineSeparator() +
+
+                    "if errorlevel 0 (" + System.lineSeparator() +
+                    "    java -jar payara-micro-5.182.jar --port ${port} --deploy build/libs/${archiveName} --addlibs ${pathToJavaBuilder}" + System.lineSeparator() +
+                    ")"
+        startScriptFileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file('start.bat'))))
+    }
+    startScriptFileWriter.write(command, 0, command.length())
+    startScriptFileWriter.close()
+}
+
+ext {
+    config = parseConfig()
+    pathToJavaBuilder = [config.matlabHome, config.version, 'toolbox', 'javabuilder', 'jar', 'javabuilder.jar'].join(File.separator)
+}
+
+group config.name
+version '1.0.0'
+
+// Remove build directory before compilation
+compileJava.dependsOn 'clean'
+
+task copy(type: Copy) {
+    from 'src/main/webapp/dist'
+    into 'src/main/webapp'
+}
+
+war.dependsOn 'copy'
+
+war {
+    webInf {
+        from 'config.json'
+    }
+    exclude '**/src', '**/dist'
+    baseName = config.name
+    version = version
+    doLast {
+        modifyStartScriptWithNewArchiveNameAndPortNumber(war.archiveName, config.port)
+    }
+}
+
+task restart(type: Exec, dependsOn: war) {
+    commandLine "${System.getProperty('user.home')}/payara/bin/asadmin"
+    args 'restart-domain'
+}
+
+task deploy(type: Exec, dependsOn: restart) {
+    commandLine "${System.getProperty('user.home')}/payara/bin/asadmin"
+    args 'deploy', '--force=true', "--libraries=${pathToJavaBuilder}", "${buildDir}/libs/${config.name}-${version}.war"
+}
+
+defaultTasks  'deploy'

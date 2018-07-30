@@ -1,0 +1,6 @@
+{
+    "matlabHome": "/Applications/MATLAB/MATLAB_Runtime",
+    "version": "v91",
+    "name": "matlab-webified",
+    "port": 8080
+}

@@ -13,7 +13,6 @@ compute_dot_product/
 compute_dot_product.jar
 .vscode/
 jars/compute_dot_product.jar
-src/main/webapp/dot-product.html
 src/main/java/remote/tasks/ComputeDotProductTask.java
 src/main/java/webservice/endpoints/WebServiceEndpoint.java
 

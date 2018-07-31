@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport'
+            content='width=device-width, initial-scale=1.0'>
+        <meta http-equiv='X-UA-Compatible'
+            content='ie=edge'>
+        <title>MATLAB Webified</title>
+        <style>
+            body {
+                width: 100vw;
+                height: 100vh;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .card {
+                width: 400px;
+                padding: 10px;
+                height: 300px;
+                margin: auto;
+                transform: translateY(calc((100vh - 300px) / 2));
+                position: relative;
+                perspective: 1000px;
+            }
+            
+            .card__front,
+            .card__back {
+                border-radius: 2px;
+                box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5), 0 0 1px rgba(0, 0, 0, 0.5);
+                width: inherit;
+                height: inherit;
+                padding: inherit;
+                background-color: #fff;
+                top: 0;
+                left: 0;
+                position: absolute;
+                transition: transform 1s ease, visibility 1s ease;
+                transform-origin: 50% 50%;
+                backface-visibility: hidden;
+            }
+            
+            .card__body {
+                padding: 30px 0;
+                text-align: center;
+                font-size: 25px;
+                height: 32%;
+            }
+            
+            .card__back {
+                visibility: hidden;
+                transform: rotateY(180deg);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 25px;
+            }
+            
+            .card__dot-product {
+                display: flex;
+                justify-content: space-evenly;
+                height: 30%;
+            }
+            
+            .card__form-control {
+                margin: 5px;
+                z-index: 10;
+                width: 40%;
+            }
+            
+            .card__dot-product__vector {
+                position: relative;
+                display: flex;
+                justify-content: space-evenly;
+                height: 30%;
+                width: 40%;
+            }
+            
+            .card__dot-product__vector::before,
+            .card__dot-product__vector::after {
+                position: absolute;
+                display: inline-block;
+                top: 100%;
+                z-index: 10;
+                font-size: 30px;
+            }
+            
+            .card__dot-product__vector::before {
+                left: -10px;
+                content: '(';
+            }
+            
+            .card__dot-product__vector::after {
+                content: ')';
+                left: 100%;
+            }
+            
+            .card__form-control__label {
+                display: inline-block;
+                font-weight: normal;
+                margin: 10px;
+                margin-left: 25px;
+                width: 200px;
+                vertical-align: top;
+            }
+            
+            .card__ripple-input-field {
+                display: inline-block;
+                position: relative;
+                width: 100%;
+            }
+            
+            .card__form-control:nth-child(odd) .card__ripple-input-field::after {
+                content: ',';
+                font-size: 30px;
+                position: absolute;
+                left: 100%;
+                top: 0;
+            }
+            
+            .card__ripple-input-field__input {
+                border: none;
+                border-bottom: 2px solid #e3e3e3;
+                width: 100%;
+                outline: none;
+                padding: 5px 0;
+                text-align: center;
+                font-size: 20px;
+            }
+            
+            .card__ripple-input-field__ripple-bar {
+                width: 100%;
+                height: 2px;
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                transition: transform 500ms cubic-bezier(0.23, 1, 0.32, 1);
+                transform: scaleX(0);
+                background-color: #000;
+                transform-origin: 50% 50%;
+                display: inline-block;
+            }
+            
+            .card__ripple-input-field__input:focus~.card__ripple-input-field__ripple-bar {
+                transform: scaleX(1);
+            }
+            
+            .card__dot-product__dot {
+                display: inline-block;
+                margin: 5px;
+                font-size: 30px;
+                width: 5%;
+                transform: translateY(30%);
+                text-align: center;
+            }
+            
+            .card__footer {
+                position: relative;
+                bottom: 0;
+                display: flex;
+                justify-content: flex-end;
+            }
+            
+            button {
+                background-color: rgb(83, 49, 231);
+                color: #fff;
+                border-radius: 2px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+                padding: 10px;
+                border: none;
+                outline: none;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class='card'>
+            <div class='card__front'>
+                <form class='card__dot-product'>
+                    <div class='card__dot-product__vector'>
+                        <div class='card__form-control'>
+                            <label class='card__form-control__label'></label>
+                            <span class='card__ripple-input-field'>
+                                <input class='card__ripple-input-field__input'
+                                    type='number'
+                                    required/>
+                                <span class='card__ripple-input-field__ripple-bar'></span>
+                            </span>
+                        </div>
+                        <div class='card__form-control'>
+                            <label class='card__form-control__label'></label>
+                            <span class='card__ripple-input-field'>
+                                <input class='card__ripple-input-field__input'
+                                    type='number'
+                                    required/>
+                                <span class='card__ripple-input-field__ripple-bar'></span>
+                            </span>
+                        </div>
+                    </div>
+                    <span class='card__dot-product__dot'>.</span>
+                    <div class='card__dot-product__vector'>
+                        <div class='card__form-control'>
+                            <label class='card__form-control__label'></label>
+                            <span class='card__ripple-input-field'>
+                                <input class='card__ripple-input-field__input'
+                                    type='number'
+                                    required/>
+                                <span class='card__ripple-input-field__ripple-bar'></span>
+                            </span>
+                        </div>
+                        <div class='card__form-control'>
+                            <label class='card__form-control__label'></label>
+                            <span class='card__ripple-input-field'>
+                                <input class='card__ripple-input-field__input'
+                                    type='number'
+                                    required/>
+                                <span class='card__ripple-input-field__ripple-bar'></span>
+                            </span>
+                        </div>
+                    </div>
+                </form>
+                <div class='card__body'>
+
+                </div>
+                <div class='card__footer'>
+                    <button type='button'>Compute</button>
+                </div>
+            </div>
+            <div class='card__back'>
+                <div class='card__loader'>
+                    Please wait...
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        // Retrieve the reference to the "Compute" button
+        const computeButton = document.querySelector('button');
+
+        // Retrieve the reference to the object that represents the front of the card UI component
+        // The front of the card contains the 4 inputs and the "Compute" button
+        const frontCard = document.querySelector('.card__front');
+
+        // Retrieve the reference to the back of the card UI component
+        // The back of the card is the component that contains "Please wait..." message after
+        // the "Compute" button was clicked
+        const backCard = document.querySelector('.card__back');
+
+        // Retrieve the reference to the card UI component's body
+        // The card's body is the area used to display the result
+        const cardBody = document.querySelector('.card__body');
+
+        // Retrieve the references to the 4 inputs
+        // Each one stores the value of the vector component
+        const inputsForVectorComponents = Array.from(document.querySelectorAll('.card__dot-product__vector input'));
+
+        computeButton.addEventListener('click', () => {
+            // When the "Compute" button was clicked, rotate the front side of card UI component
+            // around the Y-axis counter-clockwise to hide it, and rotate the back side into view
+            frontCard.style.visibility = 'hidden';
+            frontCard.style.transform = 'rotateY(180deg)';
+            backCard.style.visibility = 'visible';
+            backCard.style.transform = 'rotateY(360deg)';
+
+            // Stores the values of 4 inputs into an array 
+            const vectors = inputsForVectorComponents.map(element => +element.value || 0);
+
+            // Grab the first 2 values and concatenate them using comma to create the first vector
+            const firstVector = vectors.slice(0, 2).join(',');
+
+            // Grab the last 2 values and concatenate them using comma to create the second vector
+            const secondVector = vectors.slice(2).join(',');
+
+            // Invoke the Compute Dot Product endpoint passing in 2 vectors as query parameters
+            fetch(`/app/api/matlab-service/dot-product?firstVector[]=${firstVector}&secondVector[]=${secondVector}`)
+
+            // The endpoint returns the JSON data as text
+            // So we have to parse it back into JSON format
+            .then(response => response.json())
+
+            // Tell the card body to display the dot product result
+            .then(data => cardBody.innerHTML = data.result)
+
+            // If there was an error computing the dot product
+            // Display an error message in the card body
+            .catch(() => cardBody.innerHTML = 'An error occurred invoking MATLAB function. Please restart the server and reload this page')
+
+            // Whether the invocation succeeded or failed, we showed the front of the card again
+            // and hide the back side
+            .finally(() => {
+                backCard.style.visibility = 'hidden';
+                backCard.style.transform = 'rotateY(180deg)';
+                frontCard.style.visibility = 'visible';
+                frontCard.style.transform = 'rotateY(0)';
+            });
+        }, false);
+    </script>
+
+</html>

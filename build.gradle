@@ -17,6 +17,7 @@ plugins {
 }
 
 repositories {
+    jcenter()
     mavenCentral()
     flatDir {
         dirs 'jars'
@@ -28,10 +29,7 @@ dependencies {
     providedCompile group: 'org.glassfish', name: 'javax.servlet', version: '3.1.1'
     compile group: 'org.glassfish', name: 'javax.json', version: '1.1.2'
     compile 'ch.qos.logback:logback-classic:1.2.3'
-    compile name: 'compute_dot_product'
-    compile name: 'add_two_numbers'
-    compile name: 'javabuilder'
-    compile name: 'remoteproxy'
+    compile fileTree('jars')
 }
 
 def parseConfig() {
@@ -74,6 +72,8 @@ def modifyStartScriptWithNewArchiveNameAndPortNumber(String archiveName, int por
     def command;
     BufferedWriter startScriptFileWriter = null;
     def os = System.getProperty("os.name").toLowerCase()
+    def deployToPayaraMicro = """java -jar payara-micro-5.182.jar --port ${port}  --deploy build${File.separator}libs${File.separator}${archiveName} --addlibs "${pathToJavaBuilder}" """
+    
     if (os.contains("mac") || os.contains("nix")) {
         command = "" + 
                     "#!/bin/bash${System.lineSeparator()}" + 
@@ -82,17 +82,12 @@ def modifyStartScriptWithNewArchiveNameAndPortNumber(String archiveName, int por
 
                     'if [ $? -eq 0 ]' + System.lineSeparator() +
                     'then' + System.lineSeparator() + 
-                    "    java -jar payara-micro-5.182.jar --port ${port}  --deploy build/libs/${archiveName} --addlibs ${pathToJavaBuilder}" + System.lineSeparator() +
+                    '    ' + deployToPayaraMicro + System.lineSeparator() +
                     'fi'
         startScriptFileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file('start.sh'))))
     }
     else if (os.contains("win")) {
-        command = "" + 
-                    "gradlew.bat war" + System.lineSeparator() +
-
-                    "if errorlevel 0 (" + System.lineSeparator() +
-                    "    java -jar payara-micro-5.182.jar --port ${port} --deploy build/libs/${archiveName} --addlibs ${pathToJavaBuilder}" + System.lineSeparator() +
-                    ")"
+        command = deployToPayaraMicro
         startScriptFileWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file('start.bat'))))
     }
     startScriptFileWriter.write(command, 0, command.length())
@@ -107,11 +102,8 @@ ext {
 group config.name
 version '1.0.0'
 
-// Remove build directory before compilation
-compileJava.dependsOn 'clean'
-
 task copy(type: Copy) {
-    from 'src/main/webapp/dist'
+    from 'src/main/webapp/dist', 'src/main/angular/dist/**/*'
     into 'src/main/webapp'
 }
 
@@ -139,4 +131,4 @@ task deploy(type: Exec, dependsOn: restart) {
     args 'deploy', '--force=true', "--libraries=${pathToJavaBuilder}", "${buildDir}/libs/${config.name}-${version}.war"
 }
 
-defaultTasks  'deploy'
+defaultTasks 'war'

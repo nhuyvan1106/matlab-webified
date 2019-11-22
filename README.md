@@ -7,4 +7,4 @@ compiled to Java is invoked, subsequent invocations are blocked until the curren
 ideal to integrate MATLAB scripts compiled to Java into a web application. To work around this problem, each time a request
 to invoke a MATLAB script is received, the backend packages it up into a Task object, and sends it as a remote object using
 Java's technology called Remote Method Invocation (RMI) for processing, once the processing is done, the result is sent back to the
-invoking process which is the application server process. This way, the application server is from accepting new requests.
+invoking process which is the application server process. This way, the application server is always available for accepting new requests.
